@@ -56,9 +56,9 @@ func InitConfig() Config {
 	if result.dbHost == "" {
 		return Config{
 			appPort:       "8080",
-			dbUsername:    "bob",
-			dbPassword:    "P@$$w0rd",
-			dbName:        "bobdb",
+			dbUsername:    "postgres",
+			dbPassword:    "qwerty",
+			dbName:        "postgres",
 			SessionSecret: "govno",
 			dbHost:        "localhost",
 		}
