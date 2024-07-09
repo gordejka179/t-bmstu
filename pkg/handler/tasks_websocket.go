@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"github.com/Baldislayer/t-bmstu/pkg/websockets"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gordejka179/t-bmstu/pkg/websockets"
 )
 
 func (h *Handler) handleWebSocket(c *gin.Context) {

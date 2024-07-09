@@ -1,4 +1,4 @@
-module github.com/Baldislayer/t-bmstu
+module github.com/gordejka179/t-bmstu
 
 go 1.20
 

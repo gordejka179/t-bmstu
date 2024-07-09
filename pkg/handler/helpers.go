@@ -6,11 +6,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/Baldislayer/t-bmstu/pkg/testsystems"
-	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"strings"
 	"time"
+
+	"github.com/gordejka179/t-bmstu/pkg/database"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems"
+	"github.com/gordejka179/t-bmstu/pkg/websockets"
 )
 
 type TaskInfo struct {

@@ -2,8 +2,6 @@ package acmp
 
 import (
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -11,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/gordejka179/t-bmstu/pkg/database"
 )
 
 type ACMP struct {

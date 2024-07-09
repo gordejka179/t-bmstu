@@ -5,16 +5,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-gonic/gin"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+	"github.com/gordejka179/t-bmstu/pkg/database"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
 )
 
 const (

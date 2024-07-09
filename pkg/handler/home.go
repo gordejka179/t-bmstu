@@ -3,10 +3,11 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gordejka179/t-bmstu/pkg/database"
 )
 
 func (h *Handler) add(c *gin.Context) {

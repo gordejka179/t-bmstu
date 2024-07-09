@@ -2,11 +2,12 @@ package testsystems
 
 import (
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/Baldislayer/t-bmstu/pkg/testsystems/acmp"
-	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
-	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"sync"
+
+	"github.com/gordejka179/t-bmstu/pkg/database"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems/acmp"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems/timus"
+	"github.com/gordejka179/t-bmstu/pkg/websockets"
 )
 
 // AllowedTestsystems - разрешенные (добавленные) тестирующие системы

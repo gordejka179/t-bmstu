@@ -3,11 +3,12 @@ package websockets
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/gordejka179/t-bmstu/pkg/database"
+	"github.com/gorilla/websocket"
 )
 
 var Upgrader = websocket.Upgrader{

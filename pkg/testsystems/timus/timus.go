@@ -3,9 +3,6 @@ package timus
 import (
 	"errors"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/texttheater/golang-levenshtein/levenshtein"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,6 +11,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/gordejka179/t-bmstu/pkg/database"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
 )
 
 type Task struct {

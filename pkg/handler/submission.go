@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/gin-gonic/gin"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gordejka179/t-bmstu/pkg/database"
 )
 
 func (h *Handler) getSumbissionCode(c *gin.Context) {

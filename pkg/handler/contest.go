@@ -3,12 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/gin-gonic/gin"
 	"html/template"
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gordejka179/t-bmstu/pkg/database"
 )
 
 type ContestTableTask struct {

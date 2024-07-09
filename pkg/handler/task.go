@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"github.com/Baldislayer/t-bmstu/pkg/testsystems/acmp"
-	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems/acmp"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems/timus"
 )
 
 func (h *Handler) timusTaskList(c *gin.Context) {

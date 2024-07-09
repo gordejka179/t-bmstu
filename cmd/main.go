@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/Baldislayer/t-bmstu"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
-	"github.com/Baldislayer/t-bmstu/pkg/handler"
-	"github.com/Baldislayer/t-bmstu/pkg/testsystems"
 	"log"
 	"os"
+
+	t_bmstu "github.com/gordejka179/t-bmstu"
+	"github.com/gordejka179/t-bmstu/pkg/database"
+	"github.com/gordejka179/t-bmstu/pkg/handler"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems"
 )
 
 type Config struct {
