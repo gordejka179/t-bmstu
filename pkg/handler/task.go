@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gordejka179/t-bmstu/pkg/testsystems/acmp"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems/codeforces"
 	"github.com/gordejka179/t-bmstu/pkg/testsystems/timus"
 )
 
@@ -66,6 +67,33 @@ func (h *Handler) acmpTaskList(c *gin.Context) {
 		"TestSystem": "ACMP",
 		"Tasks":      taskList,
 	})
+
+}
+
+func (h *Handler) codeforcesTaskList(c *gin.Context) {
+
+	count := c.Query("count")
+
+	parsedCount, err := strconv.Atoi(count)
+	if err != nil {
+		parsedCount = 15
+	}
+
+	if parsedCount > 50 {
+		parsedCount = 50
+	}
+
+	taskList, err := codeforces.GetTaskList(parsedCount)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "bad req")
+	}
+
+	c.HTML(http.StatusOK, "testsystem-tasks-list.tmpl", gin.H{
+		"TestSystem": "codeforces",
+		"Tasks":      taskList,
+	})
+
 }
 
 func (h *Handler) submitTask(c *gin.Context) {
