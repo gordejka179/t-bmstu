@@ -88,7 +88,6 @@ func (h *Handler) codeforcesTaskList(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, "bad req")
 	}
-
 	c.HTML(http.StatusOK, "testsystem-tasks-list.tmpl", gin.H{
 		"TestSystem": "codeforces",
 		"Tasks":      taskList,

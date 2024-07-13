@@ -6,6 +6,7 @@ import (
 
 	"github.com/gordejka179/t-bmstu/pkg/database"
 	"github.com/gordejka179/t-bmstu/pkg/testsystems/acmp"
+	"github.com/gordejka179/t-bmstu/pkg/testsystems/codeforces"
 	"github.com/gordejka179/t-bmstu/pkg/testsystems/timus"
 	"github.com/gordejka179/t-bmstu/pkg/websockets"
 )
@@ -14,6 +15,7 @@ import (
 var AllowedTestsystems = []TestSystem{
 	&timus.Timus{Name: "timus"},
 	&acmp.ACMP{Name: "acmp"},
+	&codeforces.Codeforces{Name: "codeforces"},
 }
 
 // TestSystem - это интерфейс класса тестирующей системы, то есть все тестирующие системы должны обладать этими функциями

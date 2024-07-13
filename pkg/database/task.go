@@ -3,9 +3,10 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4"
 	"log"
 	"time"
+
+	"github.com/jackc/pgx/v4"
 )
 
 func AddSubmission(submission Submission) (int, error) {

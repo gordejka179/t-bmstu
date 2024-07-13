@@ -5,9 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/text/encoding/charmap"
-	"golang.org/x/text/transform"
 	"io"
 	"log"
 	"mime/multipart"
@@ -15,6 +12,10 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 )
 
 func decodeWindows1251(reader io.Reader) (io.Reader, error) {

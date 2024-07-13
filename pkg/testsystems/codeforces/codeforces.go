@@ -14,19 +14,19 @@ import (
 	"github.com/gordejka179/t-bmstu/pkg/database"
 )
 
-type codeforces struct {
+type Codeforces struct {
 	Name string
 }
 
-func (t *codeforces) Init() {
+func (t *Codeforces) Init() {
 
 }
 
-func (t *codeforces) GetName() string {
+func (t *Codeforces) GetName() string {
 	return t.Name
 }
 
-func (t *codeforces) CheckLanguage(language string) bool {
+func (t *Codeforces) CheckLanguage(language string) bool {
 	languagesDict := map[string]struct{}{
 		"MinGW GNU C++ 13.1.0":        struct{}{},
 		"Python 3.11.0":               struct{}{},
@@ -51,7 +51,7 @@ func (t *codeforces) CheckLanguage(language string) bool {
 	return true
 }
 
-func (t *codeforces) GetLanguages() []string {
+func (t *Codeforces) GetLanguages() []string {
 	return []string{
 		"MinGW GNU C++ 13.1.0",
 		"Python 3.11.0",
@@ -68,10 +68,10 @@ func (t *codeforces) GetLanguages() []string {
 	}
 }
 
-func (t *codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
+func (t *Codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
 	defer wg.Done()
 
-	myTocodeforcesDict := map[string]string{
+	myToCodeforcesDict := map[string]string{
 		"MinGW GNU C++ 13.1.0":        "CPP",
 		"Python 3.11.0":               "PY",
 		"PascalABC.NET 3.8.3":         "PP",
@@ -89,10 +89,10 @@ func (t *codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 	client := &http.Client{Jar: jar}
 
 	// Выполнение первого запроса для аутентификации
-	loginURL := "https://codeforces.ru/index.asp?main=enter&r=30147517425972369652497"
+	loginURL := "https://Codeforces.com/enter?back=%2F"
 	loginData := url.Values{
-		"lgn":      {"aukseu228"},
-		"password": {"M6v-rzz-Hgm-Skg"},
+		"lgn":      {"gordejka179"},
+		"password": {"RhYkYFi^*ES]%6Q"},
 	}
 	client.PostForm(loginURL, loginData)
 
@@ -105,11 +105,11 @@ func (t *codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 		// перебираем все решения
 		for _, submission := range submissions {
 			fileData := url.Values{
-				"lang":   {myTocodeforcesDict[submission.Language]},
+				"lang":   {myToCodeforcesDict[submission.Language]},
 				"source": {string(submission.Code)},
 			}
 			id, err := Submit(client,
-				fmt.Sprintf("https://codeforces.ru/index.asp?main=update&mode=upload&id_task=%s", submission.TaskID),
+				fmt.Sprintf("https://Codeforces.ru/index.asp?main=update&mode=upload&id_task=%s", submission.TaskID),
 				fileData,
 				submission.TaskID)
 			if err != nil {
@@ -126,12 +126,12 @@ func (t *codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 			ch <- submission
 		}
 
-		// TODO codeforces придется тестировать на rps защиту
+		// TODO Codeforces придется тестировать на rps защиту
 		time.Sleep(time.Second * 2)
 	}
 }
 
-func (t *codeforces) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) {
+func (t *Codeforces) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) {
 	// жесткий парсинг таблицы результатов
 	defer wg.Done()
 
@@ -152,7 +152,7 @@ func (t *codeforces) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) 
 
 		pageNum := 0
 		for len(submissions) != 0 {
-			currentUrl := fmt.Sprintf("https://codeforces.ru/index.asp?main=status&id_mem=%d&id_res=0&id_t=0&page=%d", 333835, pageNum)
+			currentUrl := fmt.Sprintf("https://Codeforces.ru/index.asp?main=status&id_mem=%d&id_res=0&id_t=0&page=%d", 333835, pageNum)
 
 			result, err := http.Get(currentUrl)
 			if err != nil {
@@ -221,8 +221,8 @@ func (t *codeforces) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) 
 	}
 }
 
-func (t *codeforces) GetProblem(taskID string) (database.Task, error) {
-	taskURL := fmt.Sprintf("https://codeforces.ru/index.asp?main=task&id_task=%s", taskID)
+func (t *Codeforces) GetProblem(taskID string) (database.Task, error) {
+	taskURL := fmt.Sprintf("https://codeforces.com/problemset/problem/%s", taskID)
 
 	resp, err := http.Get(taskURL)
 	if err != nil {
@@ -244,18 +244,20 @@ func (t *codeforces) GetProblem(taskID string) (database.Task, error) {
 	}
 
 	var content string
-	startTag := "h1"
-	endTag := "<h4><i>Для отправки решения задачи необходимо <a href=\"/inc/register.asp\">зарегистрироваться</a> и авторизоваться!</i></h4>"
+	startTag := "div.problem-statement"
+	endTag := "</div>"
 
-	taskName := ""
+	taskName := doc.Find("div.problem-statement h3").Text()
 
-	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
-		taskName = s.Text()
-	})
+	fmt.Println(189)
+	fmt.Println(taskName)
 
 	Constraints := map[string]string{}
 	ended := false
+	fmt.Println(ended)
 	doc.Find(startTag).NextUntil(endTag).Each(func(i int, s *goquery.Selection) {
+		fmt.Println(s)
+
 		if s.Text() != "" {
 			if !ended {
 				ended = strings.Contains(s.Text(), "Для отправки решения задачи")

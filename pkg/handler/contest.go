@@ -92,6 +92,10 @@ func (h *Handler) getTask(c *gin.Context) {
 	} else {
 		value = c.Param("id")
 	}
+	/*fmt.Println("АВАДА КЕДАРВААУКАКПППППППППППППППППППППППППДЛВЫП")
+	fmt.Println(value)
+	fmt.Println("АВАДА КЕДАРВААУКАКПППППППППППППППППППППППППДЛВЫП")
+	*/
 
 	if ok {
 		taskInfo, taskParts, err := GetTaskPartsById(value)

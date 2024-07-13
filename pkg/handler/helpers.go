@@ -26,7 +26,6 @@ func TaskInfoById(s string) (TaskInfo, error) {
 		return TaskInfo{}, err
 	}
 	decodedString := string(decodedBytes)
-
 	for _, system := range testsystems.AllowedTestsystems {
 		if strings.HasPrefix(decodedString, system.GetName()) {
 			// Нашли систему, разделяем online_judge и id
@@ -45,6 +44,7 @@ func GetTaskParts(taskId string, taskInfo *TaskInfo) (database.Task, error) {
 	exist, taskParts, err := database.TaskExist(taskId)
 
 	if !exist {
+
 		taskParts, err = taskInfo.onlineJudge.GetProblem(taskInfo.id)
 
 		if err != nil {
@@ -67,7 +67,6 @@ func GetTaskPartsById(task_id string) (TaskInfo, database.Task, error) {
 	}
 
 	taskParts, err := GetTaskParts(task_id, &taskInfo)
-
 	return taskInfo, taskParts, err
 }
 
