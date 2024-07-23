@@ -43,6 +43,7 @@ func TaskInfoById(s string) (TaskInfo, error) {
 func GetTaskParts(taskId string, taskInfo *TaskInfo) (database.Task, error) {
 	exist, taskParts, err := database.TaskExist(taskId)
 
+	//потом поставить "!"
 	if !exist {
 
 		taskParts, err = taskInfo.onlineJudge.GetProblem(taskInfo.id)

@@ -61,20 +61,18 @@ func getMiddle(start *goquery.Selection, end string) string {
 		return ""
 	}
 
-	text := ""
+	var middleText []string
 	currentElement := start.Next()
 
 	for currentElement.Length() != 0 && !(strings.HasPrefix(currentElement.Text(), end)) {
-		htmlContent, err := currentElement.Html()
-		if err != nil {
-			log.Fatal(err)
+		text := strings.TrimSpace(currentElement.Text())
+		if text != "" {
+			middleText = append(middleText, text)
 		}
-
-		text += htmlContent + " "
 		currentElement = currentElement.Next()
 	}
 
-	return strings.TrimSpace(text)
+	return strings.Join(middleText, " ")
 }
 
 func parseTableToJSON(table *goquery.Selection) string {

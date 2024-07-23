@@ -318,10 +318,12 @@ func (t *ACMP) GetProblem(taskID string) (database.Task, error) {
 	}
 	Input := getMiddle(doc.Find("h2:contains('Входные данные')").First(),
 		"Выходные данные")
+	fmt.Println(Input)
 	Output := getMiddle(doc.Find("h2:contains('Выходные данные')").First(),
 		"Пример")
 
 	tests := parseTableToJSON(doc.Find("h2:contains('Пример')").First().Next())
+	fmt.Println(tests)
 
 	return database.Task{
 		Name:        taskName,

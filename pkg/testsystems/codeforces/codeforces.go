@@ -1,7 +1,9 @@
 package codeforces
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gordejka179/t-bmstu/pkg/database"
+	"golang.org/x/net/html"
 )
 
 type Codeforces struct {
@@ -28,8 +31,9 @@ func (t *Codeforces) GetName() string {
 
 func (t *Codeforces) CheckLanguage(language string) bool {
 	languagesDict := map[string]struct{}{
-		"MinGW GNU C++ 13.1.0":        struct{}{},
-		"Python 3.11.0":               struct{}{},
+		"GNU GCC C11 5.1.0":           struct{}{},
+		"GNU G++ 14 6.4.0":            struct{}{},
+		"Python 3.8.10":               struct{}{},
 		"PascalABC.NET 3.8.3":         struct{}{},
 		"Java SE JDK 16.0.1":          struct{}{},
 		"Free Pascal 3.2.2":           struct{}{},
@@ -53,8 +57,9 @@ func (t *Codeforces) CheckLanguage(language string) bool {
 
 func (t *Codeforces) GetLanguages() []string {
 	return []string{
-		"MinGW GNU C++ 13.1.0",
-		"Python 3.11.0",
+		"GNU GCC C11 5.1.0",
+		"GNU G++ 14 6.4.0",
+		"Python 3.8.10",
 		"PascalABC.NET 3.8.3",
 		"Java SE JDK 16.0.1",
 		"Free Pascal 3.2.2",
@@ -69,11 +74,75 @@ func (t *Codeforces) GetLanguages() []string {
 }
 
 func (t *Codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
-	defer wg.Done()
+
+	// Создаем новый cookie jar
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{Jar: jar}
+
+	// Выполняем первый запрос для получения CSRF-токена
+	resp1, err := client.Get("https://codeforces.com/enter?back=%2F")
+	defer resp1.Body.Close()
+
+	htmlData, err := ioutil.ReadAll(resp1.Body)
+	doc, err := html.Parse(bytes.NewReader(htmlData))
+
+	var csrfToken string
+	var findCSRFToken func(*html.Node)
+	findCSRFToken = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "input" {
+			for _, a := range n.Attr {
+				if a.Key == "name" && a.Val == "csrf_token" {
+					for _, a := range n.Attr {
+						if a.Key == "value" {
+							csrfToken = a.Val
+							return
+						}
+					}
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			findCSRFToken(c)
+		}
+	}
+	findCSRFToken(doc)
+
+	if csrfToken == "" {
+		fmt.Println("Не удалось найти CSRF-токен")
+	} else {
+		fmt.Printf("CSRF-токен: %s\n", csrfToken)
+	}
+
+	// Теперь, когда у нас есть CSRF-токен, мы можем использовать его в последующих запросах
+
+	loginURL := "https://Codeforces.com/enter?back=%2F"
+	loginData := url.Values{
+		"csrf_token":    {csrfToken},
+		"action":        {"enter"},
+		"ftaa":          {"nxnnepf797p929r93p"},
+		"bfaa":          {"939f6b320d3e9e423cd3b4899db9631d"},
+		"handleOrEmail": {"gordejka179"},
+		"password":      {"XB#8T^m;xj5n~;8"},
+		"_tta":          {"962"},
+	}
+
+	resp, _ := client.PostForm(loginURL, loginData)
+
+	defer resp.Body.Close()
+
+	fileName := "enter.html"
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Ошибка при чтении ответа:", err)
+		return
+	}
+
+	err = ioutil.WriteFile(fileName, responseBody, 0644)
 
 	myToCodeforcesDict := map[string]string{
-		"MinGW GNU C++ 13.1.0":        "CPP",
-		"Python 3.11.0":               "PY",
+		"GNU GCC C11 5.1.0":           "43",
+		"GNU G++ 14 6.4.0":            "50",
+		"Python 3.8.10":               "31",
 		"PascalABC.NET 3.8.3":         "PP",
 		"Java SE JDK 16.0.1":          "JAVA",
 		"Free Pascal 3.2.2":           "PAS",
@@ -85,16 +154,6 @@ func (t *Codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 		"Go 1.16.3":                   "GO",
 		"Node.js 19.0.0":              "JS",
 	}
-	jar, _ := cookiejar.New(nil)
-	client := &http.Client{Jar: jar}
-
-	// Выполнение первого запроса для аутентификации
-	loginURL := "https://Codeforces.com/enter?back=%2F"
-	loginData := url.Values{
-		"lgn":      {"gordejka179"},
-		"password": {"RhYkYFi^*ES]%6Q"},
-	}
-	client.PostForm(loginURL, loginData)
 
 	for {
 		submissions, err := database.GetSubmitsWithStatus(t.GetName(), 0)
@@ -105,30 +164,78 @@ func (t *Codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 		// перебираем все решения
 		for _, submission := range submissions {
 			fileData := url.Values{
-				"lang":   {myToCodeforcesDict[submission.Language]},
-				"source": {string(submission.Code)},
+				"csrf_token": {csrfToken},
+				"ftaa":       {"nxnnepf797p929r93p"},
+				"bfaa":       {"939f6b320d3e9e423cd3b4899db9631d"},
+				"action":     {"submitSolutionFormSubmitted"},
+
+				"contestId":             {string(strings.Split(submission.TaskID, "/")[0])},
+				"submittedProblemIndex": {string(strings.Split(submission.TaskID, "/")[1])},
+
+				"programTypeId": {myToCodeforcesDict[submission.Language]},
+				"source":        {string(submission.Code)},
+				"tabSize":       {"4"},
+				"sourceFile":    {""},
+				"_tta":          {"350"},
 			}
-			id, err := Submit(client,
-				fmt.Sprintf("https://Codeforces.ru/index.asp?main=update&mode=upload&id_task=%s", submission.TaskID),
-				fileData,
-				submission.TaskID)
+
+			submitURL := fmt.Sprintf("https://codeforces.com/problemset/submit/%s", submission.TaskID)
+
+			req, _ := http.NewRequest("POST", submitURL, strings.NewReader(fileData.Encode()))
+
+			// Создаем тело запроса
+
+			req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8")
+			// req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
+			req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+
+			req.Header.Set("Connection", "keep-alive")
+			//req.Header.Set("Content-Length", "какое то число")
+
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			//req.Header.Set("Cookie", s)
+
+			req.Header.Set("Host", "codeforces.com")
+
+			req.Header.Set("Priority", "u=0, i")
+
+			req.Header.Set("Referer", "https://codeforces.com/problemset/submit/1992/G")
+			req.Header.Set("Sec-Fetch-Dest", "document")
+			req.Header.Set("Sec-Fetch-Mode", "navigate")
+
+			req.Header.Set("Sec-Fetch-Site", "same-origin")
+			req.Header.Set("Sec-Fetch-User", "?1")
+			req.Header.Set("TE", "trailers")
+			req.Header.Set("Upgrade-Insecure-Requests", "1")
+
+			req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0")
+
+			resp, err = client.Do(req)
 			if err != nil {
 				fmt.Println(err)
-				// скипаем эту посылку
-				// подумать, может ее и удалить еще?
-				continue
 			}
+			defer resp.Body.Close()
+
+			fileName = "codeforces_response.html"
+			responseBody, err = ioutil.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Println("Ошибка при чтении ответа:", err)
+				return
+			}
+
+			err = ioutil.WriteFile(fileName, responseBody, 0644)
 
 			// теперь надо передать по каналу, что был изменен статус этой задачи
 			submission.Status = 1
 			submission.Verdict = "Compiling"
-			submission.SubmissionNumber = id
+			submission.SubmissionNumber = "0"
 			ch <- submission
 		}
 
-		// TODO Codeforces придется тестировать на rps защиту
 		time.Sleep(time.Second * 2)
 	}
+
 }
 
 func (t *Codeforces) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) {
@@ -222,7 +329,7 @@ func (t *Codeforces) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) 
 }
 
 func (t *Codeforces) GetProblem(taskID string) (database.Task, error) {
-	taskURL := fmt.Sprintf("https://codeforces.com/problemset/problem/%s", taskID)
+	taskURL := fmt.Sprintf("https://codeforces.com/problemset/problem/%s/?locale=ru", taskID)
 
 	resp, err := http.Get(taskURL)
 	if err != nil {
@@ -231,99 +338,48 @@ func (t *Codeforces) GetProblem(taskID string) (database.Task, error) {
 	}
 	defer resp.Body.Close()
 
-	utf8Reader, err := decodeWindows1251(resp.Body)
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 		return database.Task{}, err
 	}
 
-	doc, err := goquery.NewDocumentFromReader(utf8Reader)
-	if err != nil {
-		log.Fatal(err)
-		return database.Task{}, err
-	}
+	taskName := ""
 
-	var content string
-	startTag := "div.problem-statement"
-	endTag := "</div>"
+	doc.Find("div.title").Each(func(i int, s *goquery.Selection) {
+		if taskName == "" {
+			taskName = s.Text()[2:]
+		}
 
-	taskName := doc.Find("div.problem-statement h3").Text()
-
-	fmt.Println(189)
-	fmt.Println(taskName)
+	})
 
 	Constraints := map[string]string{}
-	ended := false
-	fmt.Println(ended)
-	doc.Find(startTag).NextUntil(endTag).Each(func(i int, s *goquery.Selection) {
-		fmt.Println(s)
-
-		if s.Text() != "" {
-			if !ended {
-				ended = strings.Contains(s.Text(), "Для отправки решения задачи")
-
-				if !ended {
-					if strings.Contains(s.Text(), "Время") {
-						parts := strings.Split(s.Text(), "Память:")
-						if len(parts) >= 2 {
-							timePart := strings.TrimSpace(parts[0])
-							memoryPart := strings.TrimSpace(parts[1])
-
-							time := extractValuePref(timePart, "Время:")
-							memory := extractValueSuf(memoryPart, "Мб")
-
-							Constraints = map[string]string{
-								"time":   time,
-								"memory": memory,
-							}
-						} else {
-							fmt.Println("Не удалось извлечь время и память.")
-						}
-
-					} else {
-						elem, err := s.Html()
-						if err != nil {
-							return
-						}
-						content += elem
-					}
-				}
-			}
-		}
-	})
 
 	var Condition string
-	centerFound := false
-	h2InputFound := false
-	doc.Find(startTag).NextUntil("<h2>Входные данные</h2>").Each(func(i int, s *goquery.Selection) {
-		if !h2InputFound {
-			if s.Is("h2") && s.Text() == "Входные данные" {
-				h2InputFound = true
-				return
-			}
 
-			if centerFound {
-				elem, _ := s.Html()
-				Condition += elem
-			}
+	doc.Find("div.header").NextUntil("div.input-specification").Each(func(i int, s *goquery.Selection) {
+		Condition = s.Text()
+	})
+	Input := ""
+	Output := ""
 
-			if s.Is("center") {
-				centerFound = true
-			}
-		}
+	//Входные данные
+	doc.Find("html body div#body div div#pageContent.content-with-sidebar div.problemindexholder div.ttypography div.problem-statement div.input-specification div.section-title").NextUntil("div.input-specification").Each(func(i int, s *goquery.Selection) {
+		Input = s.Text()
 	})
 
-	// newDoc, err := goquery.NewDocumentFromReader(utf8Reader)
+	//Выходные данные
+	doc.Find("html body div#body div div#pageContent.content-with-sidebar div.problemindexholder div.ttypography div.problem-statement div.output-specification div.section-title").NextUntil("html body div#body div div#pageContent.content-with-sidebar div.problemindexholder div.ttypography div.problem-statement div.sample-tests").Each(func(i int, s *goquery.Selection) {
+		Output = s.Text()
+	})
+
 	if err != nil {
 		log.Fatal(err)
 		return database.Task{}, err
-	}
-	Input := getMiddle(doc.Find("h2:contains('Входные данные')").First(),
-		"Выходные данные")
-	Output := getMiddle(doc.Find("h2:contains('Выходные данные')").First(),
-		"Пример")
 
-	tests := parseTableToJSON(doc.Find("h2:contains('Пример')").First().Next())
+	}
+
+	tests := parseTableToJSON(doc.Find("html body div#body div div#pageContent.content-with-sidebar div.problemindexholder div.ttypography div.problem-statement div.sample-tests"), doc)
 
 	return database.Task{
 		Name:        taskName,

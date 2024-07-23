@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
@@ -57,47 +56,26 @@ func extractValuePref(part, prefix string) string {
 	return ""
 }
 
-func getMiddle(start *goquery.Selection, end string) string {
-	if start == nil {
-		return ""
-	}
-
-	text := ""
-	currentElement := start.Next()
-
-	for currentElement.Length() != 0 && !(strings.HasPrefix(currentElement.Text(), end)) {
-		htmlContent, err := currentElement.Html()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		text += htmlContent + " "
-		currentElement = currentElement.Next()
-	}
-
-	return strings.TrimSpace(text)
-}
-
-func parseTableToJSON(table *goquery.Selection) string {
+func parseTableToJSON(table *goquery.Selection, doc *goquery.Document) string {
 	tests := []map[string]string{}
-
-	rows := table.Find("tr")
-	rows.Each(func(i int, row *goquery.Selection) {
-		if i != 0 { // Skip the header row
-			cells := row.Find("td")
-			if cells.Length() == 3 {
-				inputData, _ := cells.Eq(1).Html()
-				outputData, _ := cells.Eq(2).Html()
-
-				test := map[string]string{
-					"input":  strings.TrimSpace(inputData),
-					"output": strings.TrimSpace(outputData),
-				}
-				tests = append(tests, test)
-			}
-		}
+	inputData := ""
+	outputData := ""
+	/* у codeforces какая то неадекватная структура.
+	В том числе не всегда даны входные и выходные данные,
+	*/
+	doc.Find("html body div#body div div#pageContent.content-with-sidebar div.problemindexholder div.ttypography div.problem-statement div.sample-tests div.sample-test div.input").NextUntil("html body div#body div div#pageContent.content-with-sidebar div.problemindexholder div.ttypography div.problem-statement div.sample-tests div.sample-test div.input").Each(func(i int, s *goquery.Selection) {
+		outputData = s.Text()
+		outputData = strings.TrimPrefix(outputData, "Выходные данные")
 	})
 
+	table.Find(".test-example-line").Each(func(i int, s *goquery.Selection) {
+		inputData += s.Text() + "\n"
+	})
+	test := map[string]string{
+		"input":  strings.TrimSpace(inputData),
+		"output": strings.TrimSpace(outputData),
+	}
+	tests = append(tests, test)
 	jsonTests, err := json.MarshalIndent(tests, "", "  ")
 	if err != nil {
 		log.Fatal(err)
@@ -111,65 +89,69 @@ func Submit(client *http.Client, submitURL string, fileData url.Values, taskId s
 	var buffer bytes.Buffer
 	writer := multipart.NewWriter(&buffer)
 
-	// Добавление пустого файла в multipart форму
-	formFile, _ := writer.CreateFormFile("fname", "")
-	formFile.Write([]byte(""))
-
+	// Добавление остальных полей в multipart форму
 	for key, val := range fileData {
 		_ = writer.WriteField(key, val[0])
 	}
+
+	// Закрытие multipart формы
 	writer.Close()
 
+	// Создание HTTP-запроса
 	req, err := http.NewRequest("POST", submitURL, &buffer)
 	if err != nil {
 		return "0", err
 	}
+
+	// Установка заголовка Content-Type
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
+	// Отправка запроса
 	resp, err := client.Do(req)
+
 	if err != nil {
 		return "0", err
 	}
 	defer resp.Body.Close()
 
-	// https://acmp.ru/index.asp?main=status&id_mem=333835&id_res=0&id_t=1&page=0
-
-	forIdUrl := fmt.Sprintf("https://acmp.ru/index.asp?main=status&id_mem=%d&id_res=0&id_t=%s&page=0", 333835, taskId)
-	result, err := http.Get(forIdUrl)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return "1", err
-	}
-	defer result.Body.Close()
-
-	utf8Reader, err := decodeWindows1251(result.Body)
-	if err != nil {
-		log.Fatal(err)
-		return "1", err
-	}
-
-	doc, err := goquery.NewDocumentFromReader(utf8Reader)
-	if err != nil {
-		log.Fatal(err)
-		return "1", err
-	}
-
-	table := doc.Find("table.main.refresh[align='center']")
-	if table.Length() > 0 {
-		// Найти первую строку таблицы, которая не является заголовком
-		rows := table.Find("tr")
-		for i := 1; i < rows.Length(); i++ { // Начинаем с 1, чтобы пропустить заголовок
-			row := rows.Eq(i)
-			columns := row.Find("td")
-			if columns.Length() > 0 {
-				id := columns.Eq(0).Text()
-				fmt.Sprintf(id)
-				return id, nil
-			}
+	/*
+		forIdUrl := fmt.Sprintf("https://codeforces.ru/index.asp?main=status&id_mem=%d&id_res=0&id_t=%s&page=0", 333835, taskId)
+		result, err := http.Get(forIdUrl)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return "1", err
 		}
-	} else {
-		fmt.Println("Table not found")
-	}
+		defer result.Body.Close()
+
+		utf8Reader, err := decodeWindows1251(result.Body)
+		if err != nil {
+			log.Fatal(err)
+			return "1", err
+		}
+
+		doc, err := goquery.NewDocumentFromReader(utf8Reader)
+		if err != nil {
+			log.Fatal(err)
+			return "1", err
+		}
+
+		table := doc.Find("table.main.refresh[align='center']")
+		if table.Length() > 0 {
+			// Найти первую строку таблицы, которая не является заголовком
+			rows := table.Find("tr")
+			for i := 1; i < rows.Length(); i++ { // Начинаем с 1, чтобы пропустить заголовок
+				row := rows.Eq(i)
+				columns := row.Find("td")
+				if columns.Length() > 0 {
+					id := columns.Eq(0).Text()
+					fmt.Sprintf(id)
+					return id, nil
+				}
+			}
+		} else {
+			fmt.Println("Table not found")
+		}
+	*/
 
 	return "1", nil
 }
@@ -197,7 +179,7 @@ type Task struct {
 }
 
 func GetTaskList(count int) ([]Task, error) {
-	result, err := http.Get("https://codeforces.com/problemset")
+	result, err := http.Get("https://codeforces.com/problemset/?locale=ru")
 	if err != nil {
 		return nil, err
 	}
