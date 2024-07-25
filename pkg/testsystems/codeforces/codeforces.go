@@ -123,7 +123,7 @@ func (t *Codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 		"bfaa":          {"939f6b320d3e9e423cd3b4899db9631d"},
 		"handleOrEmail": {"gordejka179"},
 		"password":      {"XB#8T^m;xj5n~;8"},
-		"_tta":          {"962"},
+		"_tta":          {"661"},
 	}
 
 	resp, _ := client.PostForm(loginURL, loginData)
@@ -176,17 +176,15 @@ func (t *Codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 				"source":        {string(submission.Code)},
 				"tabSize":       {"4"},
 				"sourceFile":    {""},
-				"_tta":          {"350"},
+				"_tta":          {"661"},
 			}
 
 			submitURL := fmt.Sprintf("https://codeforces.com/problemset/submit/%s", submission.TaskID)
 
 			req, _ := http.NewRequest("POST", submitURL, strings.NewReader(fileData.Encode()))
 
-			// Создаем тело запроса
-
 			req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8")
-			// req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
+			req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
 			req.Header.Set("Accept-Language", "en-US,en;q=0.5")
 
 			req.Header.Set("Connection", "keep-alive")
@@ -211,17 +209,25 @@ func (t *Codeforces) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission
 
 			req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0")
 
-			resp, err = client.Do(req)
-			if err != nil {
-				fmt.Println(err)
-			}
-			defer resp.Body.Close()
+			/*
+				resp, err = client.Do(req)
+				if err != nil {
+					fmt.Println(err)
+				}
+				defer resp.Body.Close()
+			*/
+			client.Transport = &http.Transport{Proxy: http.ProxyFromEnvironment}
+			resp, err := client.PostForm(submitURL, fileData)
 
 			fileName = "codeforces_response.html"
 			responseBody, err = ioutil.ReadAll(resp.Body)
 			if err != nil {
 				fmt.Println("Ошибка при чтении ответа:", err)
 				return
+			}
+			fmt.Println("Response Headers:")
+			for k, v := range resp.Header {
+				fmt.Printf("%s: %v\n", k, v)
 			}
 
 			err = ioutil.WriteFile(fileName, responseBody, 0644)
